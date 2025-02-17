@@ -1,0 +1,125 @@
+{% extends "../../store/base.html" %} {% load static %} {% block title %} Customer List {%endblock %} {% block content %}
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f2f2f2;
+    }
+    
+    .crm-container {
+        max-width: 800px;
+        margin: 20px auto;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .crm-header h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .crm-content {
+        padding: 20px;
+    }
+    
+    .customer-card {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .customer-name {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .customer-phone {
+        color: #888;
+    }
+    
+    .customer-status {
+        color: #007bff;
+        font-weight: bold;
+    }
+    
+</style>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Interface</title>
+</head>
+<body>
+    <div class="crm-container">
+        <div class="crm-header">
+            <h1>Customer Relationship Management</h1>
+        </div>
+        <div class="container"
+        <h2>Customer List</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Customer Name</th>
+                    <th>Phone Number</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{order.full_name}}</td>
+                    <td>{{order.phone}}</td>
+                </tr>
+                {% endfor %}
+                <!-- Add more rows as needed -->
+            </tbody>
+        </table>>
+            <!-- Customer data will be displayed here -->
+        </div>
+    </div>
+</body>
+</html>
+
+{% endblock %}

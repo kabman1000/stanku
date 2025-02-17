@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+  <title>Invoice Crystal Wood</title>
+<style>
+  .clearfix:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+a {
+  text-decoration: underline;
+}
+
+body {
+  position: relative;
+  margin: 0 auto; 
+  color: #001028;
+  background: #FFFFFF; 
+  font-family: Arial, sans-serif; 
+  font-size: 33px; 
+  font-family: Arial;
+  font-weight: bold;
+}
+
+header {
+  padding: 10px 0;
+  margin-bottom: 0px;
+}
+
+#logo {
+  text-align: center;
+  margin-bottom: 0px;
+}
+
+#logo img {
+  width: 90px;
+}
+
+h1 {
+  
+  color: #5D6975;
+  font-size: 2.0em;
+  line-height: 1.0em;
+  font-weight: normal;
+  text-align: center;
+  margin: 0 0 10px 0;
+}
+
+#project {
+  float: left;
+}
+
+#project span {
+  color: #5D6975;
+  text-align: right;
+  width: 52px;
+  margin-right: 10px;
+  display: inline-block;
+  font-size: 14px;
+}
+
+#company {
+  float: right;
+  text-align: right;
+}
+
+#project div,
+#company div {
+  white-space: nowrap;        
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin-bottom: 10px;
+}
+
+
+
+table th,
+table td {
+  text-align: center;
+}
+
+table th {
+  
+  
+  color: black;
+  border-bottom: 1px solid #C1CED9;
+  white-space: nowrap;        
+  font-weight: bold;
+}
+
+table .service,
+table .desc {
+  text-align: left;
+}
+
+table td {
+ padding-top:2px;
+ padding-bottom:2px;
+  
+}
+
+table tr {
+  border-bottom: 1px solid #C1CED9;
+  font-weight: bold;
+}
+
+table td.service,
+table td.desc {
+  vertical-align: top;
+}
+
+table td.unit,
+table td.qty,
+table td.total {
+  font-size: 1.2em;
+}
+
+table td.grand {
+  border-top: 1px solid #5D6975;;
+}
+
+#notices .notice {
+  color: #5D6975;
+  font-size: 1.2em;
+}
+
+footer {
+  color: #5D6975;
+  width: 100%;
+  height: 30px;
+  position: absolute;
+  bottom: 0;
+  border-top: 1px solid #C1CED9;
+  padding: 8px 0;
+  text-align: center;
+}
+
+
+  </style>
+</head>
+
+<body>
+  <header class="clearfix">
+    <div id="logo" style="display:flex; justify-content:center; align-items:center;">
+      <h1 class="brand-name">Crystal Wood</h1>
+    </div>
+    <h1>INVOICE</h1>
+    <div id="company" class="clearfix">
+      <div>Contact Us: 0244270435/0268572858</div>
+    </div>
+    <div id="project">
+      <div><span>CLIENT:</span> {{name}}</div>
+      <div><span>DATE:</span> {{date}}</div>
+      <div><span>INVOICE ID:</span> {{order_id}}</div>
+    </div>
+  </header>
+    <div class="table-container" style="overflow-x:auto">
+      <table class="table" style="width:100%">
+          <thead>
+              <tr>
+                  <th scope="col">QUANTITY</th>
+                  <th scope="col">DESC</th>
+                  <th scope="col">UNIT PRICE</th>
+                  <th scope="col">AMOUNT</th>
+              </tr>
+          </thead>
+          <tbody>
+              {% for i in order.item.all %}
+              <tr>
+                  <td>{{i.quantity}}</td>
+                  <td scope="row">{{i.product.code|upper}}</td>
+                  <td>{{i.price}}</td>
+                  <td>{{i.total_cost}}</td>
+                  
+              </tr>
+              {% endfor %}
+              <tr>
+                  <td scope="row"></td>
+                  <td></td>
+                  <td>TOTAL: </td>
+                  <td>{{amount}}</td>
+                  
+              </tr>
+          </tbody>
+      </table>
+
+    </div>
+    <p style="text-align:right; font-size:18px;">*All values are in GHC<p>
+    <p style="text-align:left; font-size:18px;">*All goods sold are not returnable<p>
+</body>
+
+</html>

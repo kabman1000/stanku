@@ -1,0 +1,72 @@
+{% extends "./base.html" %}
+{% load static %}
+{% block title %}Tile Shop{% endblock %}
+{% block content %}
+
+ 
+<main>
+  <section class="py-5 text-center container">
+    <div class="row py-lg-3">
+      <div class="col-lg-6 col-md-8 mx-auto">
+        <h1 class="h1 fw-bold">SCHOOL JUNCTION SHOP</h1>
+        <p class="lead text-muted">Your one stop shop for all tiles and building materials.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="album py-5 bg-light">
+    <div class="container">
+
+      <div class="pb-3 h5">All Tiles</div>
+      <form id="cat-form" method="get" action="{% url "store:subcategory" %}" >
+        {% csrf_token %}
+        <div class="ui selection dropdown" id="cats">
+          <input type="hidden" name="cat">
+          <i class="dropdown icon"></i>
+          <div class="default text" id="cat-text">Choose a category</div>
+          <div class="menu" id='cats-data-box'>
+            
+          </div>
+        </div>
+        <div class="ui selection dropdown" id="subcats">
+          <input type="hidden" name="subcat">
+          <i class="dropdown icon"></i>
+          <div class="default text" id="subcat-text">Choose a subcategory</div>
+          <div class="menu" id='subcats-data-box'>
+            
+          </div>
+        </div> 
+        <button type="submit" class="ui primary button">Get</button>
+      </form>
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 g-3">
+
+        {% for product in products %}
+
+        <div class="col">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <p class="card-text">
+                <a class="text-dark text-decoration-none" href="{{ product.get_absolute_url }}">{{ product.title }}</a>
+                <p>{{product.code}}</p>
+                <p>Price: ₵{{product.price}}</p>
+                <p>Inventory: {{product.inventory}} units</p>
+              </p>
+              <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">6ft coverage</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {% endfor %}
+
+      </div>
+    </div>
+  </div>
+
+
+</main>
+
+<script src="{% static 'store/main.js' %}" data-rel-js></script>
+<script src="{% static 'store/semantic.js' %}" data-rel-js></script>
+{% endblock %}

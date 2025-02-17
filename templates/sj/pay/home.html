@@ -1,0 +1,121 @@
+{% extends "../base.html" %}
+{% load static %}
+{% block title %}Payment{% endblock %}
+{% block content %}
+
+<style>
+  .account-form input{
+    border: 2px solid #ccc;
+    height: calc(2em + .75rem + 2px);
+  }
+
+  .form-control {
+    border: 2px solid #ccc;
+  }
+
+  .account-form input:focus {
+    border-color: #1497ff;
+    box-shadow: inset 0 0px 0px rgba(0, 0, 0, 0.075), 0 0 0px rgba(255, 0, 0, 0.6);
+  }
+
+  .payment-container {
+    display: flex;
+  }
+  
+  .payment-option {
+    flex: 1;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+  }
+  
+  .payment-option:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .vertical-bar {
+    border-left: 1px solid #ccc;
+  }
+  
+  .hidden {
+    display: none;
+  }
+</style>
+
+
+<div id="fullPaymentComponent">
+  <!-- Full Payment Component -->
+  <div class="container-fluid">
+    <div class="row no-gutter">
+      <div class="col-md-12">
+        <div class="login d-flex align-items-center py-5">
+          <div class="container">
+            <div class="row">
+              <div id="payment-form" class="col-12 col-lg-6 mx-auto">
+                <h2>Full Payment Component</h2>
+                <!-- Error messages in this element -->
+                {% if messages %}
+                <div id="card-errors" class="a" role="alert">
+                  {% for message in messages %}
+                  {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}
+                  {% endfor %}
+                </div>
+                {% endif %}
+                <form>
+                  <div class="row g-3">
+                    
+                    <div class="col-sm-7">
+                      <label for="firstName" class="form-label">Customer Name</label>
+                      <input type="text" class="form-control" id="custName" placeholder="Enter Name">
+                      <div class="invalid-feedback">
+                        Valid first name is required.
+                      </div>
+                    </div>
+                    <div class="col-12">
+                      <label for="phone" class="form-label">Phone</label>
+                      <input type="text" class="form-control" id="phone" placeholder="0244546856">
+                      <div class="invalid-feedback">
+                        Please enter a valid phone number for shipping updates.
+                      </div>
+                    </div>
+                    <div class="col-12">
+                      <label for="address" class="form-label">Address</label>
+                      <input type="text" class="form-control" id="custAdd" placeholder="1234 Main St">
+                      <div class="invalid-feedback">
+                        Please enter your shipping address.
+                      </div>
+                    </div>
+                    <div class="col-12">
+                      <label for="paid" class="form-label">Paid</label>
+                      <input type="text" class="form-control" id="paid" placeholder={{total}} value={{total}}>
+                      <div class="invalid-feedback">
+                        Please enter your shipping address.
+                      </div>
+                    </div>
+                    
+                  </div>
+              
+                  <button id="submit" class="btn btn-primary w-100 fw-bold" value={{product.id}} data-secret="{{ client_secret }}">Pay</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Add your full payment component content here -->
+</div>
+
+
+
+
+
+
+<script>
+    var CSRF_TOKEN = '{{ csrf_token }}';
+</script>
+<script src="{% static 'payment/haciento.js' %}" data-rel-js></script>
+
+
+{% endblock %}

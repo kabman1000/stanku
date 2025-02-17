@@ -1,0 +1,40 @@
+{% extends "../../store/base.html" %}
+{% load static %}
+
+{% block content %}
+
+    <div class="container" style="max-width: 1000px">
+        <form action="." method="post">
+          {% csrf_token %}
+          {{form}}
+          <button type='submit'> Get Date</button>
+        </form> 
+        <table class="table">
+            {% for sale in sales %}
+            <thead>
+                <tr>
+                  <th scope="col">Order #</th>
+                  <th scope="col">Paid</th>
+                  <th scope="col">Date Paid</th>
+                </tr>
+            </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">{{sale.order_number}}</th>
+                  <td>₵{{ sale.total_paid }}</td>
+                  <td>{{ sale.created.date }}</td>
+                </tr>
+              </tbody>
+            {% endfor %}
+            <tr>
+              <td>Total</td>
+              <td>{{total}}</td>
+            </tr>
+        </table>
+      
+        
+    </div>
+
+
+{% endblock %}
+
