@@ -12,7 +12,7 @@ from django.db import models
 admin.site.register(Order)
 admin.site.register(OrderItem)
 
-@admin.register(InventoryReport)
+@admin.site.unregister(InventoryReport)
 class InventoryAdmin(admin.ModelAdmin):
     actions = ["export_as_csv"]
 
@@ -108,7 +108,7 @@ class InventoryAdmin(admin.ModelAdmin):
     list_per_page = 20
 
 
-@admin.register(SalesReport)
+@admin.site.unregister(SalesReport)
 class SalesAdmin(admin.ModelAdmin):
     actions = ["export_as_csv"]
 
@@ -213,14 +213,14 @@ class SalesAdmin(admin.ModelAdmin):
 
 
 
-@admin.register(Category)
+@admin.site.unregister(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug']
     prepopulated_fields = {'slug': ('name',)}
     
 
 
-@admin.register(Product)
+@admin.site.unregister(Product)
 class ProductAdmin(admin.ModelAdmin):
     
 
@@ -231,8 +231,7 @@ class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('title',)}
     search_fields = ['code']
 
-
-@admin.register(SubCategory)
+@admin.site.unregister(SubCategory)
 class SubcategoryAdmin(admin.ModelAdmin):
     list_display=['name','categories']
 

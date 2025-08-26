@@ -137,3 +137,18 @@ class SalesReport(models.Model):
         self.number_of_transactions = self.calculate_number_of_transactions()
         self.average_transaction_value = self.calculate_average_transaction_value()
         super().save(*args, **kwargs)
+
+
+class InventoryMovement(models.Model):
+    MOVEMENT_TYPE_CHOICES = [
+        ('IN', 'Stock In'),
+        ('OUT', 'Stock Out'),
+    ]
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    movement_type = models.CharField(max_length=3, choices=MOVEMENT_TYPE_CHOICES)
+    quantity = models.PositiveIntegerField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    note = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.product} - {self.movement_type} - {self.quantity} on {self.timestamp:%Y-%m-%d}"

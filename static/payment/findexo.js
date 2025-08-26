@@ -1,4 +1,3 @@
-
 function generateRandomInvoiceNumber(){
   const characters = '0123456789';
   const length = 8;
@@ -15,24 +14,27 @@ var clientsecret = generateRandomInvoiceNumber();
 
 // Set up Stripe.js and Elements to use in checkout form
 var style = {
-base: {
-  color: "#000",
-  lineHeight: '2.4',
-  fontSize: '16px'
-}
+  base: {
+    color: "#000",
+    lineHeight: '2.4',
+    fontSize: '16px'
+  }
 };
-
 
 var form = document.getElementById('payment-form');
 
 form.addEventListener('submit', function(ev) {
-ev.preventDefault();
+  ev.preventDefault();
 
-var custName = document.getElementById("custName").value;
-var phone = document.getElementById("phone").value;
-var custAdd = document.getElementById("custAdd").value;
-var paid = document.getElementById("paid").value;
+  var custName = document.getElementById("custName").value;
+  var phone = document.getElementById("phone").value;
+  var custAdd = document.getElementById("custAdd").value;
+  var paid = document.getElementById("paid").value;
 
+  // Disable the button and change its text
+  var payButton = document.getElementById('submit');
+  payButton.disabled = true;
+  payButton.textContent = 'Loading...';
 
   $.ajax({
     type: "POST",
@@ -50,12 +52,12 @@ var paid = document.getElementById("paid").value;
     success: function (json) {
       console.log(json.success)
       window.location.replace("http://127.0.0.1:8000/payment/orderplaced/");
-
     },
-    error: function (xhr, errmsg, err) {},
+    error: function (xhr, errmsg, err) {
+      // Re-enable the button and reset its text in case of error
+      payButton.disabled = false;
+      payButton.textContent = 'Pay';
+    },
   });
-
-
-
 });
 

@@ -1,18 +1,19 @@
 from django.contrib import admin
+from unfold.admin import ModelAdmin
 from .models import Category, Product, SubCategory
 
 
 
 
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(ModelAdmin):
     list_display = ['name', 'slug']
     prepopulated_fields = {'slug': ('name',)}
     
 
 
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(ModelAdmin):
     list_display = ['title', 'inventory', 'code', 'price',
                     'in_stock', 'created', 'updated','subcategory']
     list_filter = ['in_stock', 'is_active']
@@ -22,6 +23,6 @@ class ProductAdmin(admin.ModelAdmin):
 
 
 @admin.register(SubCategory)
-class SubcategoryAdmin(admin.ModelAdmin):
+class SubcategoryAdmin(ModelAdmin):
     list_display=['name','categories']
 

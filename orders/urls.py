@@ -19,4 +19,5 @@ urlpatterns = [
     path('customers/', views.customer_rel, name='customer-rel'),
     path("chart/spend-per-customer/<int:year>/", views.spend_per_customer_chart, name="chart-spend-per-customer"),
     #path('generateinvoice/<int:pk>/', views.GenerateInvoice.as_view(), name = 'generateinvoice')
+    
 ]

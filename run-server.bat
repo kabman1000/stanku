@@ -1,5 +1,5 @@
-cd C:\Users\HP\Desktop\y-comm
-set VIRTUAL_ENV=C:\Users\HP\Desktop\y-commvenv
+cd C:\Users\HP\Desktop\stanku
+set VIRTUAL_ENV=C:\Users\HP\Desktop\stanku\venv
 
 if not defined PROMPT set PROMPT=$P$G
 
@@ -18,3 +18,4 @@ if not defined _OLD_VIRTUAL_PATH set _OLD_VIRTUAL_PATH=%PATH%
 set PATH=%VIRTUAL_ENV%\Scripts;%PATH%
 start C:\"Program Files"\Google\Chrome\Application\chrome.exe
 .\manage.py runserver
+pause

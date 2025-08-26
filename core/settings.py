@@ -13,6 +13,8 @@ ALLOWED_HOSTS = []
 
 
 INSTALLED_APPS = [
+    'unfold',
+    'unfold.contrib.filters',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -25,7 +27,6 @@ INSTALLED_APPS = [
     'payment',
     'orders',
     'rangefilter',
-    'shop2',
 ]
 
 MIDDLEWARE = [
@@ -128,3 +129,7 @@ LOGIN_REDIRECT_URL = '/account/dashboard'
 LOGIN_URL = '/account/login/'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+UNFOLD = {
+    "DASHBOARD_CALLBACK": "orders.views.dashboard_callback",
+}
