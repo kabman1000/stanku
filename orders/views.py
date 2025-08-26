@@ -125,24 +125,32 @@ def add(request):
         return JsonResponse({'error': 'Failed to process order'}, status=500)
 
 
+@login_required
 def user_orders(request):
-    user_id = request.user.id
-    orders = Order.objects.filter(user_id=user_id).filter(billing_status=True)
-    print(orders)
+    if request.user.is_staff or request.user.is_superuser:
+        orders = Order.objects.filter(billing_status=True)
+    else:
+        orders = Order.objects.filter(user_id=request.user.id, billing_status=True)
     return orders
 
 @login_required
 def sales(request):
-    user_id = request.user.id
-    sales = Order.objects.filter(user_id=user_id).filter(billing_status=True)[:85]
+    if request.user.is_staff or request.user.is_superuser:
+        sales = Order.objects.filter(billing_status=True)[:85]
+    else:
+        sales = Order.objects.filter(user_id=request.user.id, billing_status=True)[:85]
     form = StockHistorySearchForm(request.POST or None)
     total = sum([sale.total_paid for sale in sales])
-    print(total)
     if request.method == 'POST':
-        sales = Order.objects.filter(user_id=user_id).filter(billing_status=True).filter(created__range=[form['start_date'].value(),form['end_date'].value()])
+        if request.user.is_staff or request.user.is_superuser:
+            sales = Order.objects.filter(billing_status=True).filter(
+                created__range=[form['start_date'].value(), form['end_date'].value()])
+        else:
+            sales = Order.objects.filter(user_id=request.user.id, billing_status=True).filter(
+                created__range=[form['start_date'].value(), form['end_date'].value()])
         total = sum([sale.total_paid for sale in sales])
     return render(request,
-                  'account/user/sales.html', {'sales':sales, 'form':form, 'total':total})
+                  'account/user/sales.html', {'sales': sales, 'form': form, 'total': total})
 
 def dash(request):
     orders = Order.objects.all()

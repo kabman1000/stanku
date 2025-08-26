@@ -4,6 +4,8 @@ from django.db import models
 from django.utils import timezone
 from store.models import Product
 from django.db.models import F, Sum
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 
 class Order(models.Model):
@@ -152,3 +154,23 @@ class InventoryMovement(models.Model):
 
     def __str__(self):
         return f"{self.product} - {self.movement_type} - {self.quantity} on {self.timestamp:%Y-%m-%d}"
+
+
+@receiver(pre_delete, sender=Order)
+def handle_order_delete(sender, instance, **kwargs):
+    # Restore product inventory and create InventoryMovement for each item
+    for item in instance.items.all():
+        if item.product:
+            # Update product inventory
+            item.product.inventory += item.quantity
+            item.product.save(update_fields=['inventory'])
+            # Log the inventory movement
+            InventoryMovement.objects.create(
+                product=item.product,
+                quantity=item.quantity,
+                note="Returned order",
+                movement_type="IN",
+                timestamp=timezone.now()
+            )
+    # Delete related InventoryReport and SalesReport for this order
+    
