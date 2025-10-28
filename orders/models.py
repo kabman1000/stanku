@@ -152,3 +152,24 @@ class InventoryMovement(models.Model):
 
     def __str__(self):
         return f"{self.product} - {self.movement_type} - {self.quantity} on {self.timestamp:%Y-%m-%d}"
+
+
+class SecondaryOrder(models.Model):
+    """
+    Separate table for orders that are explicitly copied when the checkbox is selected.
+    Keeps a reference to the original Order for traceability.
+    """
+    order = models.OneToOneField('Order', on_delete=models.CASCADE, related_name='secondary_copy')
+    order_number = models.CharField(max_length=255)
+    customer_name = models.CharField(max_length=255, blank=True, null=True)
+    phone = models.CharField(max_length=50, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    total = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Secondary Order"
+        verbose_name_plural = "Secondary Orders"
+
+    def __str__(self):
+        return f"SecondaryOrder #{self.order_number} (orig: {self.order_id})"

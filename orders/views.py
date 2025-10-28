@@ -13,7 +13,15 @@ from django.db.models import Count, F, Sum, Avg
 from django.db.models.functions import ExtractYear, ExtractMonth
 from django.http import JsonResponse
 from dateutil.relativedelta import relativedelta
-from .models import Order, Product
+from .models import (
+    Order,
+    OrderItem,
+    InventoryReport,
+    SalesReport,
+    InventoryMovement,
+    SecondaryOrder,
+    Product,
+)
 from django.db.models import Sum
 from django.db.models.functions import TruncMonth
 from django.utils.timezone import now
@@ -21,9 +29,8 @@ from datetime import datetime, timedelta
 from collections import OrderedDict
 from django.db import transaction, IntegrityError
 from basket.basket import Basket
-from store.models import Product
-from .models import Order, OrderItem, InventoryReport, SalesReport, InventoryMovement
 from utils.charts import months, colorPrimary, colorSuccess, colorDanger, generate_color_palette, get_year_dict
+import json
 
 
 def payment_confirmation(order_number):
@@ -116,8 +123,37 @@ def add(request):
             sales_report.average_transaction_value = sales_report.calculate_average_transaction_value()
             sales_report.save()
 
+        # --- Improved checkbox detection ---
+        copy_flag = False
+        # 1) check standard POST form
+        val = request.POST.get('copy_to_secondary')
+        # 2) fallback to querystring
+        if val is None:
+            val = request.GET.get('copy_to_secondary')
+        # 3) fallback to JSON body (common with AJAX)
+        if val is None:
+            try:
+                body = json.loads(request.body.decode() or "{}")
+                val = body.get('copy_to_secondary')
+            except Exception:
+                val = None
+        if val is not None:
+            copy_flag = str(val).lower() in ('on', 'true', '1', 'yes')
+
+        if copy_flag:
+            if not hasattr(order, 'secondary_copy'):
+                SecondaryOrder.objects.create(
+                    order=order,
+                    order_number=order.order_number,
+                    customer_name=getattr(order, 'full_name', '') or '',
+                    phone=getattr(order, 'phone', '') or '',
+                    address=getattr(order, 'address1', '') or '',
+                    total=getattr(order, 'total_paid', None),
+                )
+
         transaction.savepoint_commit(savepoint)
-        return JsonResponse({'success': 'Order created'})
+        # return copy_flag for quick debugging in frontend
+        return JsonResponse({'success': 'Order created', 'copy_to_secondary': copy_flag})
 
     except Exception as e:
         transaction.savepoint_rollback(savepoint)

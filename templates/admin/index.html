@@ -4,7 +4,19 @@
     <a href="{% url 'admin:index' %}">THE TILE SHOP</a>
   </h1>
 {% endblock %}
+
 {% block content %}
+<!-- Add the toggle button at the top -->
+<div class="mb-4">
+  <button 
+    id="toggleOrdersVisibility" 
+    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+    onclick="toggleOrdersMenu()"
+    style="color: white;"  <!-- Added explicit text color -->
+  >
+    Back Up
+  </button>
+</div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
   <!-- Sales Chart -->
@@ -140,4 +152,44 @@ if (productLabels.length && productUnits.length) {
     </table>
   </div>
 </div>
+
+<script>
+function toggleOrdersMenu() {
+    // Specifically target the Orders link in the sidebar
+    const sidebarLinks = document.querySelectorAll('a');
+    for (const link of sidebarLinks) {
+        if (link.textContent.trim() === 'Orders' && !link.textContent.includes('Secondary')) {
+            const menuItem = link.closest('li') || link.parentElement;
+            
+            // Get current state from localStorage or default to visible
+            const isHidden = localStorage.getItem('ordersHidden') === 'true';
+            
+            if (isHidden) {
+                // Show the menu item
+                menuItem.style.display = 'block';
+                localStorage.setItem('ordersHidden', 'false');
+            } else {
+                // Hide the menu item
+                menuItem.style.display = 'none';
+                localStorage.setItem('ordersHidden', 'true');
+            }
+            break; // Stop after finding the main Orders link
+        }
+    }
+}
+
+// Apply the saved state on page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (localStorage.getItem('ordersHidden') === 'true') {
+        const sidebarLinks = document.querySelectorAll('a');
+        for (const link of sidebarLinks) {
+            if (link.textContent.trim() === 'Orders' && !link.textContent.includes('Secondary')) {
+                const menuItem = link.closest('li') || link.parentElement;
+                menuItem.style.display = 'none';
+                break;
+            }
+        }
+    }
+});
+</script>
 {% endblock %}

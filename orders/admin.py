@@ -4,13 +4,19 @@ import csv
 from django.http import HttpResponse
 from django.utils import timezone
 from django.db.models import Min,Sum,F
-from .models import Order, OrderItem,InventoryReport,SalesReport,Product, InventoryMovement
+from .models import Order, OrderItem,InventoryReport,SalesReport,Product, InventoryMovement, SecondaryOrder
 from datetime import timedelta, datetime
 from rangefilter.filters import DateRangeFilter, DateTimeRangeFilter
 from decimal import Decimal
 from django.db import models
 from unfold.contrib.filters.admin import RangeDateFilter, RangeDateTimeFilter
 from django.core.exceptions import ValidationError
+from django.utils.html import format_html, format_html_join
+from django.urls import reverse
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+from django.http import JsonResponse
+from django.urls import path
 
 class OrderItemInline(TabularInline):
     model = OrderItem
@@ -357,3 +363,34 @@ class InventoryMovementAdmin(ModelAdmin):
             product.inventory -= obj.quantity
         product.save()
         super().save_model(request, obj, form, change)
+
+@admin.register(SecondaryOrder)
+class SecondaryOrderAdmin(ModelAdmin):
+    list_display = ['order_number', 'customer_name', 'phone', 'total', 'created']
+    search_fields = ['order_number', 'customer_name', 'phone']
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('toggle-orders-view/', self.toggle_orders_view, name='toggle_orders_view'),
+        ]
+        return custom_urls + urls
+
+    def toggle_orders_view(self, request):
+        if not request.user.is_superuser:
+            return JsonResponse({'status': 'error', 'message': 'Permission denied'})
+            
+        content_type = ContentType.objects.get_for_model(Order)
+        view_permission = Permission.objects.get(
+            content_type=content_type,
+            codename='view_order'
+        )
+        
+        if request.user.has_perm('orders.view_order'):
+            request.user.user_permissions.remove(view_permission)
+            status = 'hidden'
+        else:
+            request.user.user_permissions.add(view_permission)
+            status = 'visible'
+            
+        return JsonResponse({'status': 'success', 'view_status': status})

@@ -94,7 +94,16 @@
                     </div>
                     
                   </div>
-              
+
+                  <!-- COPY TO SECONDARY CHECKBOX -->
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" value="on" id="copy_to_secondary" name="copy_to_secondary">
+                    <label class="form-check-label" for="copy_to_secondary">
+                      Also copy this order to Secondary Orders
+                    </label>
+                    <div class="form-text">If checked, this order will be copied to the SecondaryOrder table in addition to the main Orders table.</div>
+                  </div>
+
                   <button id="submit" class="btn btn-primary w-100 fw-bold" value={{product.id}} data-secret="{{ client_secret }}">Pay</button>
                 </form>
               </div>

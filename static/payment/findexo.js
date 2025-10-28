@@ -31,6 +31,9 @@ form.addEventListener('submit', function(ev) {
   var custAdd = document.getElementById("custAdd").value;
   var paid = document.getElementById("paid").value;
 
+  // checkbox value (ensure <input id="copy_to_secondary" name="copy_to_secondary"> exists)
+  var copyFlag = $('#copy_to_secondary').is(':checked') ? 'on' : 'off';
+
   // Disable the button and change its text
   var payButton = document.getElementById('submit');
   payButton.disabled = true;
@@ -38,25 +41,27 @@ form.addEventListener('submit', function(ev) {
 
   $.ajax({
     type: "POST",
-    url: 'http://127.0.0.1:8000/orders/add/',
+    url: "/orders/add/",               // use relative path
+    dataType: "json",
     data: {
       order_number: clientsecret,
       csrfmiddlewaretoken: CSRF_TOKEN,
-      productid : $('#submit').val(),
+      productid: $('#submit').val(),
       action: "post",
       cusName: custName,
       phone_num: phone,
-      add : custAdd,
-      paid : paid,
+      add: custAdd,
+      paid: paid,
+      copy_to_secondary: copyFlag,     // <-- send checkbox value
     },
     success: function (json) {
-      console.log(json.success)
-      window.location.replace("http://127.0.0.1:8000/payment/orderplaced/");
+      console.log(json.success, 'copied:', json.copy_to_secondary);
+      window.location.replace("/payment/orderplaced/");
     },
     error: function (xhr, errmsg, err) {
-      // Re-enable the button and reset its text in case of error
       payButton.disabled = false;
       payButton.textContent = 'Pay';
+      console.error('Order create failed', xhr.responseText || errmsg);
     },
   });
 });
