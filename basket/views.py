@@ -2,6 +2,8 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 
 from store.models import Product
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 from .basket import Basket
 
@@ -58,3 +60,28 @@ def basket_update(request):
         baskettotal = basket.get_total_price()
         response = JsonResponse({'qty': basketqty, 'subtotal': baskettotal})
         return response
+
+@csrf_exempt
+def check_inventory(request):
+    if request.method == "POST":
+        try:
+            items = json.loads(request.POST.get("items", "[]"))
+        except Exception:
+            return JsonResponse({"status": "error", "message": "Invalid data."})
+
+        for item in items:
+            product_id = item.get("productid")
+            product_qty = int(item.get("productqty", 0))
+            try:
+                product = Product.objects.get(id=product_id)
+            except Product.DoesNotExist:
+                return JsonResponse({"status": "error", "message": f"Product {product_id} not found."})
+
+            if product_qty > product.inventory:  # Adjust field name if needed
+                return JsonResponse({
+                    "status": "error",
+                    "message": f"Only {product.inventory} units of '{product.title}' available in stock."
+                })
+
+        return JsonResponse({"status": "ok"})
+    return JsonResponse({"status": "error", "message": "Invalid request."})

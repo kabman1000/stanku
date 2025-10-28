@@ -196,27 +196,53 @@
     });
   });
 
-  // Update Item
+  // Update Item with inventory check
   $(document).on("click", ".update-button", function (e) {
     e.preventDefault();
     var prodid = $(this).data("index");
     var quantityInput = $("#quantity-" + prodid);
     var productQty = quantityInput.val();
+
+    // Get all products and their quantities
+    var items = [];
+    $(".product-item").each(function () {
+      var id = $(this).data("index");
+      var qty = $("#quantity-" + id).val();
+      items.push({ productid: id, productqty: qty });
+    });
+
+    // Check inventory for all products
     $.ajax({
       type: "POST",
-      url: '{% url "basket:basket_update" %}',
+      url: '{% url "basket:check_inventory" %}', // You need to create this endpoint in Django
       data: {
-        productid: $(this).data("index"),
-        productqty: productQty,
+        items: JSON.stringify(items),
         csrfmiddlewaretoken: "{{csrf_token}}",
         action: "post",
       },
       success: function (json) {
-
-        total = (parseFloat(json.subtotal) + 11.50).toFixed(2);
-        document.getElementById("basket-qty").innerHTML = json.qty;
-        document.getElementById("subtotal").innerHTML = json.subtotal;
-        document.getElementById("total").innerHTML = total;
+        if (json.status === "error") {
+          alert(json.message); // Show popup if inventory exceeded
+        } else {
+          // Proceed with update if inventory is OK
+          $.ajax({
+            type: "POST",
+            url: '{% url "basket:basket_update" %}',
+            data: {
+              productid: prodid,
+              productqty: productQty,
+              csrfmiddlewaretoken: "{{csrf_token}}",
+              action: "post",
+            },
+            success: function (json) {
+              total = (parseFloat(json.subtotal) + 11.50).toFixed(2);
+              document.getElementById("basket-qty").innerHTML = json.qty;
+              document.getElementById("subtotal").innerHTML = json.subtotal;
+              document.getElementById("total").innerHTML = total;
+            },
+            error: function (xhr, errmsg, err) {},
+          });
+        }
       },
       error: function (xhr, errmsg, err) {},
     });

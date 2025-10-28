@@ -4,6 +4,8 @@ from django.db import models
 from django.utils import timezone
 from store.models import Product
 from django.db.models import F, Sum
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 
 class Order(models.Model):
