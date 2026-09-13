@@ -149,11 +149,30 @@ class InventoryMovement(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     movement_type = models.CharField(max_length=3, choices=MOVEMENT_TYPE_CHOICES)
     quantity = models.PositiveIntegerField()
+    previous_quantity = models.PositiveIntegerField(default=0)
+    remaining_quantity = models.PositiveIntegerField(default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
     note = models.TextField(blank=True, null=True)
 
+    def save(self, *args, **kwargs):
+        if self.product_id:
+            # Preserve explicit snapshots captured before the stock change.
+            if self.previous_quantity == 0:
+                self.previous_quantity = self.product.inventory
+
+            if self.remaining_quantity == 0:
+                if self.movement_type == 'IN':
+                    self.remaining_quantity = self.previous_quantity + self.quantity
+                elif self.movement_type == 'OUT':
+                    if self.previous_quantity - self.quantity < 0:
+                        raise ValidationError("Cannot stock out more than available inventory.")
+                    self.remaining_quantity = self.previous_quantity - self.quantity
+                else:
+                    self.remaining_quantity = self.previous_quantity
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.product} - {self.movement_type} - {self.quantity} on {self.timestamp:%Y-%m-%d}"
+        return f"{self.product} - {self.movement_type} - {self.quantity} | Before: {self.previous_quantity} | After: {self.remaining_quantity} on {self.timestamp:%Y-%m-%d}"
 
 
 class SecondaryOrder(models.Model):

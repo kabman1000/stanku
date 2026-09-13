@@ -1,6 +1,7 @@
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.shortcuts import get_current_site
+from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
@@ -16,9 +17,13 @@ from .tokens import account_activation_token
 
 @login_required
 def dashboard(request):
-    orders = user_orders(request)
+    orders = user_orders(request).order_by('-created')
+    paginator = Paginator(orders, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request,
-                  'account/user/dashboard.html', {'orders':orders})
+                  'account/user/dashboard.html', {'orders': page_obj, 'paginator': paginator})
 
 @login_required
 def edit_details(request):

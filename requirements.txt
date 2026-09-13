@@ -11,6 +11,7 @@ cssselect2==0.7.0
 Django==4.1.6
 django-countries==7.5.1
 django-crispy-forms==1.14.0
+django-admin-rangefilter==0.8.0
 flake8==6.0.0
 html5lib==1.1
 idna==3.4
@@ -30,6 +31,7 @@ pypng==0.20220715.0
 python-bidi==0.4.2
 pytz==2022.7.1
 pytz-deprecation-shim==0.1.0.post0
+python-dateutil==2.9.0.post0
 PyYAML==6.0
 qrcode==7.4.2
 reportlab==3.6.12

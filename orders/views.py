@@ -8,7 +8,7 @@ from django.utils import timezone
 from datetime import datetime
 from django.shortcuts import get_object_or_404
 from .forms import StockHistorySearchForm
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Count, F, Sum, Avg
 from django.db.models.functions import ExtractYear, ExtractMonth
 from django.http import JsonResponse
@@ -38,6 +38,8 @@ def payment_confirmation(order_number):
     print(order_number)
 
 
+@login_required
+@permission_required("orders.add_order", raise_exception=True)
 @transaction.atomic
 def add(request):
     basket = Basket(request)
@@ -80,6 +82,8 @@ def add(request):
             if not inv.has_inventory():
                 raise ValueError(f'{inv.name} is out of stock.')
 
+            before_quantity = inv.inventory
+
             # Deduct from inventory
             inv.remove_items_from_inventory(count=quant)
 
@@ -91,11 +95,13 @@ def add(request):
                 quantity=quant
             )
 
-            # Log inventory movement
+            # Log inventory movement with the true before/after snapshot.
             InventoryMovement.objects.create(
                 product=inv,
                 movement_type='OUT',
                 quantity=quant,
+                previous_quantity=before_quantity,
+                remaining_quantity=inv.inventory,
                 note=f"Order #{order_number} stock out"
             )
 
@@ -172,19 +178,39 @@ def user_orders(request):
 @login_required
 def sales(request):
     if request.user.is_staff or request.user.is_superuser:
-        sales = Order.objects.filter(billing_status=True)[:85]
+        sales = Order.objects.filter(billing_status=True).order_by('-created')[:85]
     else:
-        sales = Order.objects.filter(user_id=request.user.id, billing_status=True)[:85]
+        sales = Order.objects.filter(user_id=request.user.id, billing_status=True).order_by('-created')[:85]
+
     form = StockHistorySearchForm(request.POST or None)
-    total = sum([sale.total_paid for sale in sales])
-    if request.method == 'POST':
-        if request.user.is_staff or request.user.is_superuser:
-            sales = Order.objects.filter(billing_status=True).filter(
-                created__range=[form['start_date'].value(), form['end_date'].value()])
-        else:
-            sales = Order.objects.filter(user_id=request.user.id, billing_status=True).filter(
-                created__range=[form['start_date'].value(), form['end_date'].value()])
-        total = sum([sale.total_paid for sale in sales])
+    total = sum([sale.total_paid for sale in sales], 0)
+
+    if request.method == 'POST' and form.is_valid():
+        start_date = form.cleaned_data.get('start_date')
+        end_date = form.cleaned_data.get('end_date')
+
+        if start_date and end_date:
+            if request.user.is_staff or request.user.is_superuser:
+                sales = Order.objects.filter(billing_status=True).filter(
+                    created__date__range=[start_date, end_date]
+                ).order_by('-created')
+            else:
+                sales = Order.objects.filter(user_id=request.user.id, billing_status=True).filter(
+                    created__date__range=[start_date, end_date]
+                ).order_by('-created')
+            total = sum([sale.total_paid for sale in sales], 0)
+        elif start_date or end_date:
+            base_qs = Order.objects.filter(billing_status=True) if request.user.is_staff or request.user.is_superuser else Order.objects.filter(user_id=request.user.id, billing_status=True)
+
+            if start_date and not end_date:
+                sales = base_qs.filter(created__date__gte=start_date).order_by('-created')
+            elif end_date and not start_date:
+                sales = base_qs.filter(created__date__lte=end_date).order_by('-created')
+            else:
+                sales = base_qs.order_by('-created')
+
+            total = sum([sale.total_paid for sale in sales], 0)
+
     return render(request,
                   'account/user/sales.html', {'sales': sales, 'form': form, 'total': total})
 
@@ -204,24 +230,23 @@ def customer_rel(request):
 
 
 def get_filter_options(request):
-    grouped_purchases = Order.objects.annotate(year=ExtractYear("created")).values("year").order_by("-year").distinct()
+    grouped_purchases = SalesReport.objects.annotate(year=ExtractYear("date_created")).values("year").order_by("-year").distinct()
     options = [purchase["year"] for purchase in grouped_purchases]
 
     return JsonResponse({
         "options": options,
     })
 
+
 def get_sales_chart(request, year):
-    purchases = Order.objects.filter(created__year=year)
-    grouped_purchases = purchases.annotate(price=F("total_paid")).annotate(month=ExtractMonth("created"))\
-        .values("month").annotate(average=Sum("total_paid")).values("month", "average").order_by("month")
-        
+    report_items = SalesReport.objects.filter(date_created__year=year)
+    grouped_purchases = report_items.annotate(month=ExtractMonth("date_created")) \
+        .values("month").annotate(total=Sum("total_sales")).values("month", "total").order_by("month")
+
     sales_dict = get_year_dict()
 
     for group in grouped_purchases:
-        sales_dict[months[group["month"]-1]] = round(group["average"], 2)
-
-    fixed_value = 800000
+        sales_dict[months[group["month"] - 1]] = round(float(group["total"]), 2)
 
     return JsonResponse({
         "title": f"Sales in {year}",
@@ -232,27 +257,20 @@ def get_sales_chart(request, year):
                 "backgroundColor": colorPrimary,
                 "borderColor": colorPrimary,
                 "data": list(sales_dict.values()),
-            },
-            {
-                "label": "Cost of Goods(₵)",
-                "backgroundColor": "#df4e73",
-                "borderColor": "#df4e73",
-                "data": [fixed_value] * len(sales_dict),
-            }
-            ]
+            }]
         },
     })
 
 
 def spend_per_customer_chart(request, year):
-    purchases = Order.objects.filter(created__year=year)
-    grouped_purchases = purchases.annotate(price=F("total_paid")).annotate(month=ExtractMonth("created"))\
-        .values("month").annotate(average=Avg("total_paid")).values("month", "average").order_by("month")
+    report_items = SalesReport.objects.filter(date_created__year=year)
+    grouped_purchases = report_items.annotate(month=ExtractMonth("date_created")) \
+        .values("month").annotate(average=Avg("average_transaction_value")).values("month", "average").order_by("month")
 
     spend_per_customer_dict = get_year_dict()
 
     for group in grouped_purchases:
-        spend_per_customer_dict[months[group["month"]-1]] = round(group["average"], 2)
+        spend_per_customer_dict[months[group["month"] - 1]] = round(float(group["average"]), 2)
 
     return JsonResponse({
         "title": f"Spend per customer in {year}",
@@ -272,16 +290,12 @@ def statistics_view(request):
     return render(request, "account/user/statistics.html", {})
 
 def get_most_sold_chart(request, year):
-    # Query to get the most sold items for the specified year
-    most_sold_items = OrderItem.objects.filter(order__created__year=year) \
-        .values('product__title').annotate(total_quantity=Sum('quantity')).order_by('-total_quantity')[:75]
-    print(most_sold_items)
+    most_sold_items = SalesReport.objects.filter(date_created__year=year) \
+        .values('product_title').annotate(total_quantity=Sum('total_units_sold')).order_by('-total_quantity')[:75]
 
-    # Prepare data for the chart
-    labels = [item['product__title'] for item in most_sold_items]
+    labels = [item['product_title'] for item in most_sold_items]
     quantities = [item['total_quantity'] for item in most_sold_items]
 
-    # Prepare JSON response
     response_data = {
         "title": f"Most Sold Items in {year}",
         "data": {
@@ -297,19 +311,16 @@ def get_most_sold_chart(request, year):
 
     return JsonResponse(response_data)
 
+
 def get_least_sold_chart(request, year):
-    # Query to get the most sold items for the specified year
-    most_sold_items = OrderItem.objects.filter(order__created__year=year) \
-        .values('product__title').annotate(total_quantity=Sum('quantity')).order_by('total_quantity')[:10]
-    print(most_sold_items)
+    least_sold_items = SalesReport.objects.filter(date_created__year=year) \
+        .values('product_title').annotate(total_quantity=Sum('total_units_sold')).order_by('total_quantity')[:10]
 
-    # Prepare data for the chart
-    labels = [item['product__title'] for item in most_sold_items]
-    quantities = [item['total_quantity'] for item in most_sold_items]
+    labels = [item['product_title'] for item in least_sold_items]
+    quantities = [item['total_quantity'] for item in least_sold_items]
 
-    # Prepare JSON response
     response_data = {
-        "title": f"Most Sold Items in {year}",
+        "title": f"Least Sold Items in {year}",
         "data": {
             "labels": labels,
             "datasets": [{

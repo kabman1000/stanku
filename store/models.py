@@ -69,6 +69,10 @@ class Product(models.Model):
         return self.title
 
     @property
+    def label_with_code(self):
+        return f"{self.title} ({self.code})" if self.code else self.title
+
+    @property
     def can_order(self):
         if self.has_inventory():
             return True

@@ -1,0 +1,3 @@
+ the exact script to create that user and assign only that permission.
+ pasteintoterminal
+ python manage.py shell -c "from account.models import UserBase; from django.contrib.auth.models import Permission; from django.contrib.contenttypes.models import ContentType; u=UserBase.objects.create_user(email='tileoperator@example.com', user_name='tileoperator', password='StrongPassword123!', is_active=True, is_staff=False, is_superuser=False); p=Permission.objects.get(content_type=ContentType.objects.get(app_label='orders', model='order'), codename='add_order'); u.user_permissions.add(p); print(u.email, u.is_staff, u.is_superuser, u.has_perm('orders.add_order'))"

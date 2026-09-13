@@ -1,5 +1,5 @@
-from django.contrib import admin
-from unfold.admin import ModelAdmin, TabularInline  # Import TabularInline from unfold
+from django import forms
+from django.contrib import admin# Import TabularInline from unfold
 import csv
 from django.http import HttpResponse
 from django.utils import timezone
@@ -9,7 +9,6 @@ from datetime import timedelta, datetime
 from rangefilter.filters import DateRangeFilter, DateTimeRangeFilter
 from decimal import Decimal
 from django.db import models
-from unfold.contrib.filters.admin import RangeDateFilter, RangeDateTimeFilter
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html, format_html_join
 from django.urls import reverse
@@ -18,29 +17,37 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import JsonResponse
 from django.urls import path
 
-class OrderItemInline(TabularInline):
+
+class InventoryMovementForm(forms.ModelForm):
+    class Meta:
+        model = InventoryMovement
+        fields = '__all__'
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'product':
+            kwargs['label_from_instance'] = lambda obj: f"{obj.title} ({obj.code})" if obj.code else obj.title
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0  # No extra blank forms
 
 @admin.register(Order)
-class OrderAdmin(ModelAdmin):
+class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]  # Add the inline class here
     list_filter_submit = True  # Submit button at the bottom of the filter
-    list_filter = (
-        ("created", RangeDateFilter),  # Date filter
-    )
+    list_filter = ('created',)
     search_fields = ['order_number']
     pass
 
 
 
 @admin.register(InventoryReport)
-class InventoryAdmin(ModelAdmin):
+class InventoryAdmin(admin.ModelAdmin):
     actions = ["export_as_csv"]
     list_filter_submit = True  # Submit button at the bottom of the filter
-    list_filter = (
-        ("created", RangeDateFilter),  # Date filter
-    )
+    list_filter = (('created', DateRangeFilter),)
+    search_fields = ['product_title']
 
     def export_as_csv(self, request, queryset):
         meta = self.model._meta
@@ -135,12 +142,11 @@ class InventoryAdmin(ModelAdmin):
 
 
 @admin.register(SalesReport)
-class SalesAdmin(ModelAdmin):
+class SalesAdmin(admin.ModelAdmin):
     actions = ["export_as_csv"]
     list_filter_submit = True  # Submit button at the bottom of the filter
-    list_filter = (
-        ("date_created", RangeDateFilter),  # Date filter
-    )
+    list_filter = (('date_created', DateRangeFilter),)
+    search_fields = ['product_title']
 
     def export_as_csv(self, request, queryset):
         meta = self.model._meta
@@ -240,11 +246,11 @@ class SalesAdmin(ModelAdmin):
     list_display = ['product','product_title', 'product_price', 'total_sales', 'total_units_sold', 'number_of_transactions', 'average_transaction_value', 'date_created']
     list_per_page = 20
 
-class SalesAdmin(ModelAdmin):
+class SalesAdmin(admin.ModelAdmin):
     actions = ["export_as_csv"]
     list_filter_submit = True  # Submit button at the bottom of the filter
     list_filter = (
-        ("date_created", RangeDateFilter),  # Date filter
+        ("date_created"),  # Date filter
     )
 
     def export_as_csv(self, request, queryset):
@@ -348,24 +354,31 @@ class SalesAdmin(ModelAdmin):
 
 
 @admin.register(InventoryMovement)
-class InventoryMovementAdmin(ModelAdmin):
-    list_display = ['product', 'movement_type', 'quantity', 'timestamp', 'note']
+class InventoryMovementAdmin(admin.ModelAdmin):
+    form = InventoryMovementForm
+    exclude = ['previous_quantity', 'remaining_quantity']
+    autocomplete_fields = ['product']
+    list_display = ['product', 'movement_type', 'quantity', 'previous_quantity', 'remaining_quantity', 'timestamp', 'note']
     list_filter = ['movement_type', 'timestamp', 'product']
-    search_fields = ['product__title', 'note']
+    search_fields = ['product__title', 'product__code', 'note']
 
     def save_model(self, request, obj, form, change):
         product = obj.product
+        obj.previous_quantity = product.inventory
+
         if obj.movement_type == 'IN':
             product.inventory += obj.quantity
         elif obj.movement_type == 'OUT':
             if product.inventory - obj.quantity < 0:
                 raise ValidationError("Cannot stock out more than available inventory.")
             product.inventory -= obj.quantity
-        product.save()
+
+        product.save(update_fields=['inventory'])
+        obj.remaining_quantity = product.inventory
         super().save_model(request, obj, form, change)
 
 @admin.register(SecondaryOrder)
-class SecondaryOrderAdmin(ModelAdmin):
+class SecondaryOrderAdmin(admin.ModelAdmin):
     list_display = ['order_number', 'customer_name', 'phone', 'total', 'created']
     search_fields = ['order_number', 'customer_name', 'phone']
     

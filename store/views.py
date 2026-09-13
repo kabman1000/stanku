@@ -2,10 +2,10 @@ from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
 from .models import Category, Product, SubCategory
 
-
 def product_all(request):
     products = Product.products.all().filter(in_stock=True)
     return render(request, 'store/home.html', {'products': products})
+
 
 def all_products(request):
     products = Product.products.all().filter(in_stock=True)

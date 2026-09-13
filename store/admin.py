@@ -1,5 +1,4 @@
 from django.contrib import admin, messages
-from unfold.admin import ModelAdmin
 from .models import Category, Product, SubCategory
 
 from io import BytesIO
@@ -10,22 +9,31 @@ except ImportError:
     Workbook = None
 
 @admin.register(Category)
-class CategoryAdmin(ModelAdmin):
+class CategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug']
     prepopulated_fields = {'slug': ('name',)}
     
 
 
 @admin.register(Product)
-class ProductAdmin(ModelAdmin):
+class ProductAdmin(admin.ModelAdmin):
     list_display = ['title', 'inventory', 'code', 'price',
                     'in_stock', 'created', 'updated','subcategory']
     list_filter = ['in_stock', 'is_active']
     list_editable = ['price', 'in_stock']
-    prepopulated_fields = {'slug': ('title',)}
-    search_fields = ['code']
+    prepopulated_fields = {'slug': ('title',), 'code': ('title',)}
+    readonly_fields = ['created_by']
+    search_fields = ['title', 'code']
 
     actions = ['export_products_xlsx']
+
+    def get_changeform_initial_data(self, request):
+        return {'created_by': request.user.pk}
+
+    def save_model(self, request, obj, form, change):
+        if not obj.created_by_id:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
     def export_products_xlsx(self, request, queryset):
         """
@@ -68,6 +76,6 @@ class ProductAdmin(ModelAdmin):
 
 
 @admin.register(SubCategory)
-class SubcategoryAdmin(ModelAdmin):
+class SubcategoryAdmin(admin.ModelAdmin):
     list_display=['name','categories']
 

@@ -9,12 +9,15 @@ SECRET_KEY = 'django-insecure-!l2@-t#aap-5pg5^95wv4*m1!_p(me#rd644*pz5mcq5zeqgk)
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '::1',
+    'testserver',
+]
 
 
 INSTALLED_APPS = [
-    'unfold',
-    'unfold.contrib.filters',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
